@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tcc/components/text_field_container.dart';
 
-
-class RoundedPasswordField extends StatelessWidget {
+class RoundedPasswordField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final String hintText;
   final IconData icon;
@@ -19,23 +18,30 @@ class RoundedPasswordField extends StatelessWidget {
   });
 
   @override
+  State<RoundedPasswordField> createState() => _RoundedPasswordFieldState();
+}
+
+class _RoundedPasswordFieldState extends State<RoundedPasswordField> {
+  bool _obscureText = true;
+
+  @override
   Widget build(BuildContext context) {
     return TextFieldContainer(
       child: TextFormField(
-        controller: controller,
-        obscureText: true,
-        validator: validator,
-        onChanged: onChanged,
+        controller: widget.controller,
+        obscureText: _obscureText,
+        validator: widget.validator,
+        onChanged: widget.onChanged,
         cursorColor: Colors.white70,
-        style: TextStyle(
+        style: const TextStyle(
           color: Colors.white70,
           fontSize: 16,
           fontWeight: FontWeight.w500,
           letterSpacing: 1.1,
         ),
         decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(
+          hintText: widget.hintText,
+          hintStyle: const TextStyle(
             color: Colors.white54,
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -43,14 +49,21 @@ class RoundedPasswordField extends StatelessWidget {
           ),
           border: InputBorder.none,
           icon: Icon(
-            icon,
+            widget.icon,
             color: Colors.white70,
           ),
-          suffixIcon: Icon(
-            Icons.visibility,
-            color: Colors.white70,
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscureText ? Icons.visibility_off : Icons.visibility,
+              color: Colors.white70,
+            ),
+            onPressed: () {
+              setState(() {
+                _obscureText = !_obscureText;
+              });
+            },
           ),
-          contentPadding: EdgeInsets.only(top: 4),
+          contentPadding: const EdgeInsets.only(top: 4),
         ),
       ),
     );

@@ -6,10 +6,12 @@ class AuthStorage {
 
   Future<void> saveTokens({
     required String token,
+    required String type,
     String? refreshToken,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
+    await prefs.setString('type', type);
     if (refreshToken != null) {
       await prefs.setString(_refreshKey, refreshToken);
     }
@@ -18,6 +20,11 @@ class AuthStorage {
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_tokenKey);
+  }
+
+  Future<String?> getType() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('type');
   }
 
   Future<String?> getRefreshToken() async {

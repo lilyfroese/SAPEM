@@ -53,12 +53,16 @@ class HttpClient {
     Map<String, String>? extraHeaders,
   }) async {
     final token = await authStorage.getToken();
+    final type = await authStorage.getType() ?? 'auth_token';
+    print('TOKEN RAW => "$token"');
+    print('TOKEN LENGTH => ${token?.length}');
+
 
     final uri = Uri.parse('$baseUrl$path');
 
     final headers = {
       'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+      if (token != null) 'Authorization': '$type $token',
       if (extraHeaders != null) ...extraHeaders,
     };
 

@@ -1,84 +1,108 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-/// Widget principal que representa o quebra-cabeça completo na tela
-class PuzzleGoal extends StatelessWidget {
-  final int totalPieces; // Quantidade total de peças no quebra-cabeça
-  final void Function(int)? onPieceTap; // Callback chamado ao clicar numa peça, recebe o índice da peça
-  final double verticalPaddingBottom; // Espaço inferior configurável para o layout
+import 'package:tcc/models/meta.dart';
+import 'package:tcc/service/fake_meta_service.dart';
+import 'package:tcc/screens/metas/cadastro/sign_up_goal.dart';
+
+class PuzzleGoal extends StatefulWidget {
+  final List<Meta> metas;
+  final double verticalPaddingBottom;
 
   const PuzzleGoal({
     super.key,
-    required this.totalPieces,
-    this.onPieceTap,
-    this.verticalPaddingBottom = 20.0, // valor padrão para padding inferior
+    required this.metas,
+    this.verticalPaddingBottom = 20.0, required Null Function(dynamic index) onPieceTap,
   });
 
   @override
+  State<PuzzleGoal> createState() => _PuzzleGoalState();
+}
+
+class _PuzzleGoalState extends State<PuzzleGoal>
+    with SingleTickerProviderStateMixin {
+  int? pumpIndex;
+
+  @override
   Widget build(BuildContext context) {
-    // Calcula as dimensões da grade do quebra-cabeça (linhas e colunas) baseando-se no total de peças
-    final dimensions = _calculateGridDimensions(totalPieces);
+    final metas = widget.metas;
+    final count = metas.length;
+
+    final dimensions = _calculateGrid(count);
     final rows = dimensions.item1;
     final columns = dimensions.item2;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const horizontalPadding = 20.0; // Espaçamento horizontal fixo nas laterais
+    return LayoutBuilder(builder: (context, constraints) {
+      const horizontalPadding = 20.0;
+      final verticalPaddingTop = max(10.0, 60.0 - rows * 5);
 
-        // Espaço superior que se adapta ao número de linhas (mais linhas, menos espaço superior)
-        final verticalPaddingTop = max(10.0, 60.0 - rows * 5);
+      final maxWidthArea = constraints.maxWidth - 2 * horizontalPadding;
+      final maxHeightArea =
+          constraints.maxHeight - verticalPaddingTop - widget.verticalPaddingBottom;
 
-        // Calcula o espaço máximo disponível para o quebra-cabeça dentro das restrições do LayoutBuilder
-        final maxWidthArea = constraints.maxWidth - 2 * horizontalPadding;
-        final maxHeightArea = constraints.maxHeight - verticalPaddingTop - verticalPaddingBottom;
+      final maxPieceWidth = maxWidthArea / columns;
+      final maxPieceHeight = maxHeightArea / rows;
+      final pieceSize = min(maxPieceWidth, maxPieceHeight);
 
-        // Calcula o tamanho máximo possível para cada peça, para caber na área disponível
-        final maxPieceWidth = maxWidthArea / columns;
-        final maxPieceHeight = maxHeightArea / rows;
+      final puzzleWidth = pieceSize * columns;
+      final puzzleHeight = pieceSize * rows;
 
-        // Define o tamanho da peça como o menor valor entre largura e altura para manter formato quadrado
-        final pieceSize = min(maxPieceWidth, maxPieceHeight);
+      return Padding(
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          verticalPaddingTop,
+          horizontalPadding,
+          widget.verticalPaddingBottom,
+        ),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            width: puzzleWidth,
+            height: puzzleHeight,
+            child: Stack(
+              children: List.generate(count, (index) {
+                final row = index ~/ columns;
+                final column = index % columns;
 
-        // Calcula a largura e altura totais do quebra-cabeça (baseado no tamanho da peça)
-        final puzzleWidth = pieceSize * columns;
-        final puzzleHeight = pieceSize * rows;
+                final top = row == 0
+                    ? SideType.flat
+                    : (row % 2 == 0 ? SideType.outward : SideType.inward);
 
-        return Padding(
-          // Define o padding total da área do quebra-cabeça
-          padding: EdgeInsets.fromLTRB(
-            horizontalPadding,
-            verticalPaddingTop,
-            horizontalPadding,
-            verticalPaddingBottom,
-          ),
-          child: Align(
-            alignment: Alignment.topCenter, // Alinha o quebra-cabeça no topo e centro horizontalmente
-            child: SizedBox(
-              width: puzzleWidth,
-              height: puzzleHeight,
-              child: Stack(
-                // Cria todas as peças do quebra-cabeça como widgets posicionados dentro do Stack
-                children: List.generate(totalPieces, (index) {
-                  // Calcula a linha e coluna da peça atual
-                  final row = index ~/ columns;
-                  final column = index % columns;
+                final bottom = row == rows - 1
+                    ? SideType.flat
+                    : (row % 2 == 0 ? SideType.inward : SideType.outward);
 
-                  // Define o tipo das bordas da peça (flat, inward ou outward), para formar encaixes corretos
-                  final top = row == 0 ? SideType.flat : (row % 2 == 0 ? SideType.outward : SideType.inward);
-                  final bottom = row == rows - 1 ? SideType.flat : (row % 2 == 0 ? SideType.inward : SideType.outward);
-                  final left = column == 0 ? SideType.flat : (column % 2 == 0 ? SideType.outward : SideType.inward);
-                  final right = column == columns - 1 ? SideType.flat : (column % 2 == 0 ? SideType.inward : SideType.outward);
+                final left = column == 0
+                    ? SideType.flat
+                    : (column % 2 == 0 ? SideType.outward : SideType.inward);
 
-                  return Positioned(
-                    left: column * pieceSize, // posição horizontal da peça no quebra-cabeça
-                    top: row * pieceSize, // posição vertical da peça
-                    width: pieceSize,
-                    height: pieceSize,
-                    child: GestureDetector(
-                      // Detecta toque na peça e chama o callback onPieceTap com o índice da peça
-                      onTap: () => onPieceTap?.call(index),
+                final right = column == columns - 1
+                    ? SideType.flat
+                    : (column % 2 == 0 ? SideType.inward : SideType.outward);
+
+                final meta = metas[index];
+
+                return Positioned(
+                  left: column * pieceSize,
+                  top: row * pieceSize,
+                  width: pieceSize,
+                  height: pieceSize,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() => pumpIndex = index);
+
+                      FakeMetaService.instance.toggleFeita(meta);
+
+                      Future.delayed(const Duration(milliseconds: 250), () {
+                        setState(() => pumpIndex = null);
+                      });
+                    },
+                    onLongPress: () => _showOptions(meta),
+                    child: AnimatedScale(
+                      duration: const Duration(milliseconds: 160),
+                      scale: pumpIndex == index ? 1.15 : 1.0,
                       child: PuzzlePieceWidget(
-                        index: index,
+                        meta: meta,
                         row: row,
                         column: column,
                         rows: rows,
@@ -89,56 +113,92 @@ class PuzzleGoal extends StatelessWidget {
                         right: right,
                       ),
                     ),
-                  );
-                }),
-              ),
+                  ),
+                );
+              }),
             ),
+          ),
+        ),
+      );
+    });
+  }
+
+  void _showOptions(Meta meta) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(meta.title,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+
+              // EDITAR
+              ListTile(
+                leading: const Icon(Icons.edit, color: Colors.blue),
+                title: const Text("Editar meta"),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SignUpGoalScreen(editMeta: meta),
+                    ),
+                  ).then((_) => setState(() {}));
+                },
+              ),
+
+              // DELETAR
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text("Excluir meta"),
+                onTap: () {
+                  FakeMetaService.instance.deleteMeta(meta);
+                  Navigator.pop(context);
+                  setState(() {});
+                },
+              ),
+
+              const SizedBox(height: 10),
+            ],
           ),
         );
       },
     );
   }
 
-  /// Método privado que calcula o número de linhas e colunas na grade do quebra-cabeça
-  /// baseado no total de peças, retornando uma Tuple2 com linhas e colunas.
-  Tuple2<int, int> _calculateGridDimensions(int count) {
-    switch (count) {
-      case 2: return Tuple2(2, 1);
-      case 4: return Tuple2(2, 2);
-      case 6: return Tuple2(3, 2);
-      case 8: return Tuple2(4, 2);
-      case 10: return Tuple2(5, 2);
-      case 12: return Tuple2(4, 3);
-      case 14: return Tuple2(7, 2);
-      case 16: return Tuple2(4, 4);
-      case 18: return Tuple2(6, 3);
-      case 20: return Tuple2(5, 4);
-      case 24: return Tuple2(6, 4);
-      case 28: return Tuple2(7, 4);
-      case 30: return Tuple2(6, 5);
-      case 32: return Tuple2(8, 4);
-      default: return Tuple2(count, 1); // Para números não tratados, cria uma única linha
-    }
+  Tuple2<int, int> _calculateGrid(int count) {
+    if (count <= 0) return Tuple2(1, 1);
+
+    int columns = sqrt(count).ceil();
+    int rows = (count / columns).ceil();
+
+    return Tuple2(rows, columns);
   }
 }
 
-/// Classe simples para armazenar dois valores (linhas e colunas)
-class Tuple2<T1, T2> {
-  final T1 item1;
-  final T2 item2;
+class Tuple2<A, B> {
+  final A item1;
+  final B item2;
   Tuple2(this.item1, this.item2);
 }
 
-/// Widget que representa uma única peça do quebra-cabeça
 class PuzzlePieceWidget extends StatelessWidget {
-  final int index;
-  final int row, column;
-  final int rows, columns;
-  final SideType top, bottom, left, right; // Tipo das bordas da peça
+  final Meta meta;
+  final int row, column, rows, columns;
+  final SideType top, bottom, left, right;
 
   const PuzzlePieceWidget({
     super.key,
-    required this.index,
+    required this.meta,
     required this.row,
     required this.column,
     required this.rows,
@@ -151,44 +211,46 @@ class PuzzlePieceWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Gera uma cor aleatória mas consistente para cada peça, usando o índice como semente
-    final color = _getRandomColor(index);
-
     return CustomPaint(
-      // Desenha a peça usando o PuzzlePiecePainter, que cria os encaixes e a forma visual
       painter: PuzzlePiecePainter(
-        color: color,
+        color: meta.feita ? Colors.green : meta.color,
         top: top,
         bottom: bottom,
         left: left,
         right: right,
       ),
-      child: Container(), // Container vazio apenas para ocupar espaço no CustomPaint
-    );
-  }
-
-  /// Método que gera uma cor aleatória consistente com base em uma semente (index da peça)
-  Color _getRandomColor(int seed) {
-    final random = Random(seed);
-    return Color.fromARGB(
-      255,
-      150 + random.nextInt(100), // tons médios claros para evitar cores muito escuras
-      150 + random.nextInt(100),
-      150 + random.nextInt(100),
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(meta.icon, color: Colors.white, size: 22),
+            const SizedBox(height: 4),
+            Text(
+              meta.title,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-/// Enum que define o tipo da borda da peça do quebra-cabeça
 enum SideType { flat, inward, outward }
-
-/// Enum para identificar os lados da peça
 enum Side { top, bottom, left, right }
 
-/// CustomPainter que desenha a forma da peça do quebra-cabeça, com encaixes (knobs) nas bordas
 class PuzzlePiecePainter extends CustomPainter {
-  final Color color; // Cor da peça
-  final SideType top, bottom, left, right; // Tipos das bordas
+  final Color color;
+  final SideType top, bottom, left, right;
 
   PuzzlePiecePainter({
     required this.color,
@@ -200,23 +262,21 @@ class PuzzlePiecePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final path = Path(); // Path que define a forma da peça
+    final path = Path();
 
     final w = size.width;
     final h = size.height;
-    final knobSize = min(w, h) * 0.2; // tamanho dos encaixes, proporcional ao tamanho da peça
+    final knobSize = min(w, h) * 0.2;
 
-    path.moveTo(0, 0); // ponto inicial no canto superior esquerdo
+    path.moveTo(0, 0);
 
-    // Desenha cada lado da peça, com o tipo de borda e encaixe correspondente
     _drawSide(path, w, 0, Side.top, top, knobSize);
     _drawSide(path, h, w, Side.right, right, knobSize);
     _drawSide(path, w, h, Side.bottom, bottom, knobSize);
     _drawSide(path, h, 0, Side.left, left, knobSize);
 
-    path.close(); // fecha o caminho
+    path.close();
 
-    // Define um gradiente linear para dar profundidade e sombreamento à peça
     final paint = Paint()
       ..shader = LinearGradient(
         colors: [_darken(color, 0.3), _lighten(color, 0.1)],
@@ -224,74 +284,85 @@ class PuzzlePiecePainter extends CustomPainter {
         end: Alignment.bottomRight,
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    // Desenha a forma da peça no canvas com a pintura configurada
     canvas.drawPath(path, paint);
   }
 
-  /// Escurece uma cor diminuindo sua luminosidade no espaço HSL
   Color _darken(Color color, [double amount = .2]) {
     final hsl = HSLColor.fromColor(color);
-    return hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0)).toColor();
+    return hsl
+        .withLightness((hsl.lightness - amount).clamp(0.0, 1.0))
+        .toColor();
   }
 
-  /// Clareia uma cor aumentando sua luminosidade no espaço HSL
   Color _lighten(Color color, [double amount = .2]) {
     final hsl = HSLColor.fromColor(color);
-    return hsl.withLightness((hsl.lightness + amount).clamp(0.0, 1.0)).toColor();
+    return hsl
+        .withLightness((hsl.lightness + amount).clamp(0.0, 1.0))
+        .toColor();
   }
 
-  /// Método que desenha um lado da peça, com seu respectivo encaixe (knob)
-  void _drawSide(Path path, double length, double offset, Side side, SideType type, double knobSize) {
-    double third = length / 3; // divide o lado em três partes para encaixe no meio
+  void _drawSide(Path path, double length, double offset, Side side,
+      SideType type, double knobSize) {
+    double third = length / 3;
 
     switch (side) {
       case Side.top:
-        path.lineTo(third, 0); // linha até 1/3 da largura
-        _drawKnob(path, Offset(third, 0), Offset(2 * third, 0), type, true); // desenha encaixe no meio
-        path.lineTo(length, 0); // linha até o fim do lado
+        path.lineTo(third, 0);
+        _drawKnob(path, Offset(third, 0), Offset(2 * third, 0), type, true);
+        path.lineTo(length, 0);
         break;
+
       case Side.right:
-        path.lineTo(offset, third); // linha até 1/3 da altura
-        _drawKnob(path, Offset(offset, third), Offset(offset, 2 * third), type, false); // encaixe vertical
-        path.lineTo(offset, length); // linha até o fim do lado
+        path.lineTo(offset, third);
+        _drawKnob(path, Offset(offset, third), Offset(offset, 2 * third), type,
+            false);
+        path.lineTo(offset, length);
         break;
+
       case Side.bottom:
-        path.lineTo(length - third, offset); // linha até 2/3 da largura (invertido pois desenha no sentido oposto)
-        _drawKnob(path, Offset(length - third, offset), Offset(third, offset), type, true, reverse: true); // encaixe invertido
-        path.lineTo(0, offset); // linha até o começo do lado
+        path.lineTo(length - third, offset);
+        _drawKnob(path, Offset(length - third, offset), Offset(third, offset),
+            type, true,
+            reverse: true);
+        path.lineTo(0, offset);
         break;
+
       case Side.left:
-        path.lineTo(0, length - third); // linha até 2/3 da altura
-        _drawKnob(path, Offset(0, length - third), Offset(0, third), type, false, reverse: true); // encaixe invertido vertical
-        path.lineTo(0, 0); // linha até o início do lado
+        path.lineTo(0, length - third);
+        _drawKnob(path, Offset(0, length - third), Offset(0, third), type,
+            false,
+            reverse: true);
+        path.lineTo(0, 0);
         break;
     }
   }
 
-  /// Método que desenha o encaixe (knob) da peça entre dois pontos
-  /// Pode ser horizontal ou vertical e pode estar invertido (reverse)
-  void _drawKnob(Path path, Offset from, Offset to, SideType type, bool horizontal, {bool reverse = false}) {
+  void _drawKnob(Path path, Offset from, Offset to, SideType type,
+      bool horizontal,
+      {bool reverse = false}) {
     if (type == SideType.flat) {
-      // Se a borda for flat, apenas linha reta
       path.lineTo(to.dx, to.dy);
       return;
     }
 
-    final mid = Offset((from.dx + to.dx) / 2, (from.dy + to.dy) / 2); // ponto médio entre from e to
-    final knobRadius = (horizontal ? to.dx - from.dx : to.dy - from.dy) / 1.5; // raio do knob
-    final knobDepth = (type == SideType.outward ? 1 : -1) * knobRadius; // profundidade do knob (para dentro ou para fora)
+    final mid = Offset((from.dx + to.dx) / 2, (from.dy + to.dy) / 2);
+
+    final knobRadius =
+        (horizontal ? to.dx - from.dx : to.dy - from.dy) / 1.5;
+
+    final knobDepth = (type == SideType.outward ? 1 : -1) * knobRadius;
 
     if (horizontal) {
-      // Desenha curva quadrática para encaixe horizontal
       final direction = reverse ? -1 : 1;
-      path.quadraticBezierTo(mid.dx, mid.dy + knobDepth * direction, to.dx, to.dy);
+      path.quadraticBezierTo(
+          mid.dx, mid.dy + knobDepth * direction, to.dx, to.dy);
     } else {
-      // Desenha curva quadrática para encaixe vertical
       final direction = reverse ? -1 : 1;
-      path.quadraticBezierTo(mid.dx + knobDepth * direction, mid.dy, to.dx, to.dy);
+      path.quadraticBezierTo(
+          mid.dx + knobDepth * direction, mid.dy, to.dx, to.dy);
     }
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => true; // Sempre redesenha (pode ser otimizado)
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }

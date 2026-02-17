@@ -18,7 +18,6 @@ class Body extends StatefulWidget {
 
 class _BodyState extends State<Body> {
   final _formKey = GlobalKey<FormState>();
-  final _nomeController = TextEditingController();
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
   bool _showValidation = false;
@@ -59,20 +58,6 @@ class _BodyState extends State<Body> {
               child: Column(
                 children: [
                   RoundedInputField(
-                    hintText: "NOME DE USUÁRIO",
-                    icon: Icons.person,
-                    controller: _nomeController,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Campo obrigatório";
-                      }
-                      if (value.length < 3) {
-                        return "O nome deve ter pelo menos 3 caracteres";
-                      }
-                      return null;
-                    },
-                  ),
-                  RoundedInputField(
                     hintText: "EMAIL",
                     icon: Icons.email,
                     controller: _emailController,
@@ -107,7 +92,6 @@ class _BodyState extends State<Body> {
                   final auth = AuthService();
 
                   final sucesso = await auth.login(
-                    nome: _nomeController.text,
                     email: _emailController.text,
                     senha: _senhaController.text,
                   );
@@ -115,7 +99,8 @@ class _BodyState extends State<Body> {
                   if (sucesso) {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => const PrincipalScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const PrincipalScreen()),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(

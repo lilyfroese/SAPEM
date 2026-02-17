@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:tcc/components/rounded_button.dart';
 import 'package:tcc/components/rounded_input_field.dart';
 import 'package:tcc/components/rounded_password_field.dart';
-import 'package:tcc/screens/principal/principal.dart';
+import 'package:tcc/screens/login/login_screen.dart';
 import 'package:tcc/screens/signup/components/background.dart';
 import 'package:tcc/service/auth_service.dart';
 
 class Body extends StatefulWidget {
-  final Widget child;
-
-  const Body({super.key, required this.child});
+  const Body({super.key, required Column child});
 
   @override
   State<Body> createState() => _BodyState();
@@ -37,7 +35,7 @@ class _BodyState extends State<Body> {
               shaderCallback: (bounds) => LinearGradient(
                 colors: [Colors.blue[300]!, Colors.blue[100]!],
               ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
-              child: Text(
+              child: const Text(
                 "SIGN UP",
                 style: TextStyle(
                   fontSize: 18,
@@ -62,6 +60,12 @@ class _BodyState extends State<Body> {
                     hintText: "NOME DE USUÁRIO",
                     icon: Icons.person,
                     controller: _nomeController,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Campo obrigatório";
+                      }
+                      return null;
+                    },
                   ),
                   RoundedInputField(
                     hintText: "EMAIL",
@@ -85,7 +89,7 @@ class _BodyState extends State<Body> {
                       if (value == null || value.isEmpty) {
                         return "Campo obrigatório";
                       }
-                       if (!RegExp(r'^[a-zA-Z]$').hasMatch(value)) {
+                      if (!RegExp(r'^[a-zA-Z]$').hasMatch(value)) {
                         return "Digite apenas uma letra";
                       }
                       return null;
@@ -120,12 +124,14 @@ class _BodyState extends State<Body> {
 
                   if (sucesso) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Usuário criado com sucesso!")),
+                      const SnackBar(
+                          content: Text("Usuário criado com sucesso!")),
                     );
 
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => const PrincipalScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const LoginScreen()),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(

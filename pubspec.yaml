@@ -75,6 +75,7 @@ flutter:
    - assets/images/signup_top.png
    - assets/icons/png/family-2.png
    - assets/icons/png/google_icon.png
+   - assets/images/estrela-pontiaguda.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

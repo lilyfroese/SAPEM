@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:tcc/components/rounded_button.dart';
+import 'package:tcc/core/api/api.dart';
+import 'package:tcc/models/meta.dart';
+import 'package:tcc/service/fake_meta_service.dart';
 import 'dart:ui';
 
 import 'package:tcc/service/meta.service.dart';
 
 
 class SignUpGoalScreen extends StatefulWidget {
-  const SignUpGoalScreen({super.key});
+  final Meta? editMeta;
+
+  const SignUpGoalScreen({super.key, this.editMeta});
 
   @override
   State<SignUpGoalScreen> createState() => _SignUpGoalScreenState();
@@ -60,6 +66,23 @@ class _SignUpGoalScreenState extends State<SignUpGoalScreen> {
       setState(() {});
     }
   }
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.editMeta != null) {
+      final m = widget.editMeta!;
+      tituloController.text = m.title;
+      descricaoController.text = m.description;
+      categoriaSelecionada = m.category!;
+      metaController.text = m.goalValue?.toString() ?? '';
+      dataSelecionada = m.deadline;
+      corSelecionada = m.color;
+      iconeSelecionado = m.icon;
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -240,59 +263,37 @@ class _SignUpGoalScreenState extends State<SignUpGoalScreen> {
               ),
 
               const SizedBox(height: 20),
+              RoundedButton(
+                text: widget.editMeta == null ? "Salvar Meta" : "Salvar Alterações",
+                press: () {
+                  if (widget.editMeta == null) {
+                    FakeMetaService.instance.addMeta(
+                      title: tituloController.text,
+                      description: descricaoController.text,
+                      category: categoriaSelecionada,
+                      goalValue: int.tryParse(metaController.text),
+                      deadline: dataSelecionada,
+                      color: corSelecionada,
+                      icon: iconeSelecionado ?? Icons.star,
+                    );
+                  } else {
+                    FakeMetaService.instance.updateMeta(
+                      widget.editMeta!,
+                      widget.editMeta!.copyWith(
+                        title: tituloController.text,
+                        description: descricaoController.text,
+                        category: categoriaSelecionada,
+                        goalValue: int.tryParse(metaController.text),
+                        deadline: dataSelecionada,
+                        color: corSelecionada,
+                        icon: iconeSelecionado ?? Icons.star,
+                      ),
+                    );
+                  }
 
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final metaService = MetaService();
-
-                    String type = "optional";
-                    if (categoriaSelecionada == "Saúde") type = "hydration";
-
-                    final data = {
-                      "title": tituloController.text,
-                      "description": descricaoController.text,
-                      "category": categoriaSelecionada,         
-                      "goalValue": int.tryParse(metaController.text),
-                      "deadline": dataSelecionada?.toIso8601String(),
-                      "color": '#${corSelecionada.value.toRadixString(16).substring(2)}',  
-                      "icon": "star",                            
-                      "notify": notificar,
-                    };
-
-
-                    final res = await metaService.criarMeta(data);
-
-                    if (res.ok) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Meta criada com sucesso!")),
-                      );
-                      Navigator.pop(context);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Erro: ${res.data}")),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF447BFF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-
-                  child: const Text(
-                    'Salvar Meta',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                  Navigator.pop(context);
+                },
               ),
-
             ],
           ),
         ),

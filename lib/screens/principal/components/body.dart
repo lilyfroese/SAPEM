@@ -4,6 +4,7 @@ import 'package:tcc/components/bottom_navegation_bar.dart';
 import 'package:tcc/components/custom_drawer.dart';
 import 'package:tcc/components/rounded_button.dart';
 import 'package:tcc/screens/principal/components/puzzle/puzzle_goal.dart';
+import 'package:tcc/service/fake_meta_service.dart';
 
 class Body extends StatefulWidget {
   const Body({super.key});
@@ -15,6 +16,7 @@ class Body extends StatefulWidget {
 class _BodyState extends State<Body> {
   @override
   Widget build(BuildContext context) {
+    final metas = FakeMetaService.instance.metas;
     return Scaffold(
       extendBody: true,
       extendBodyBehindAppBar: true,
@@ -32,6 +34,7 @@ class _BodyState extends State<Body> {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.brown.shade50,
+                      Colors.brown.shade50,
                     ],
                   ),
                 ),
@@ -41,8 +44,9 @@ class _BodyState extends State<Body> {
                 child: Column(
                   children: [
                     const SizedBox(height: 250), // Espaço antes do primeiro grupo
+                    
                     PuzzleGoal(
-                      totalPieces: 4,
+                      metas: metas,
                       verticalPaddingBottom: 20, // botão fica quase colado
                       onPieceTap: (index) { 
                         print('Peça $index tocada'); 
@@ -55,7 +59,7 @@ class _BodyState extends State<Body> {
                       press: () {
                         Navigator.push(context, MaterialPageRoute(
                           builder: (context) => SignUpGoalScreen(),
-                        ));
+                        )).then((_) => setState(() {})); // Atualiza ao voltar
                        },
                       textColor: Colors.white,
                       gradientColors: [Colors.grey.shade300, Colors.grey.shade300], // cinza claro

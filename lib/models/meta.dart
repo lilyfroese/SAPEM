@@ -1,49 +1,48 @@
+import 'package:flutter/material.dart';
+
 class Meta {
-  final int id;
-  final String title;
-  final String? description;
-  final String type;
-  final int? hydrationGoalMl;
-  final int? hydrationCupsGoal;
-  final int? sleepGoalHours;
-  final String? sleepTime;
-  final String? wakeTime;
-  final String? color;
-  final String? icon;
-  final String? frequency;
-  final bool isActive;
+  int id;
+  String title;
+  String description;
+  String? category;
+  int? goalValue;
+  DateTime? deadline;
+  Color color;
+  IconData icon;
+  bool feita; // <- NECESSÁRIO
 
   Meta({
     required this.id,
     required this.title,
-    this.description,
-    required this.type,
-    this.hydrationGoalMl,
-    this.hydrationCupsGoal,
-    this.sleepGoalHours,
-    this.sleepTime,
-    this.wakeTime,
-    this.color,
-    this.icon,
-    this.frequency,
-    required this.isActive,
+    required this.description,
+    this.category,
+    this.goalValue,
+    this.deadline,
+    required this.color,
+    required this.icon,
+    this.feita = false, // padrão: não feita
   });
 
-  factory Meta.fromJson(Map<String, dynamic> json) {
+  Meta copyWith({
+    String? title,
+    String? description,
+    String? category,
+    int? goalValue,
+    DateTime? deadline,
+    Color? color,
+    IconData? icon,
+    bool? feita,
+  }) {
     return Meta(
-      id: json['id'],
-      title: json['title'],
-      description: json['description'],
-      type: json['type'],
-      hydrationGoalMl: json['hydrationGoalMl'],
-      hydrationCupsGoal: json['hydrationCupsGoal'],
-      sleepGoalHours: json['sleepGoalHours'],
-      sleepTime: json['sleepTime'],
-      wakeTime: json['wakeTime'],
-      color: json['color'],
-      icon: json['icon'],
-      frequency: json['frequency'],
-      isActive: json['isActive'] ?? true,
+      id: id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      goalValue: goalValue ?? this.goalValue,
+      deadline: deadline ?? this.deadline,
+      color: color ?? this.color,
+      icon: icon ?? this.icon,
+      feita: feita ?? this.feita,
     );
   }
 }
